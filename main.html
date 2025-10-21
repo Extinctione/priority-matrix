@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Priority Matrix</title>
+<style>
+body {
+  font-family: "Poppins", sans-serif;
+  background: #fdf2f8;
+  color: #3a3a3a;
+  text-align: center;
+  padding: 2em;
+}
+h1 { color: #e75480; margin-bottom: 0.5em; }
+textarea {
+  width: 300px; height: 100px; border-radius: 12px; border: 2px solid #f7bfd2;
+  padding: 10px; resize: none; margin-bottom: 1em;
+}
+button {
+  background: linear-gradient(135deg, #ff9abb, #e75480);
+  color: #fff; border: none; border-radius: 12px; padding: 10px 18px;
+  margin: 0.5em; cursor: pointer; font-weight: 500;
+}
+button:hover { transform: translateY(-2px); }
+table {
+  border-collapse: collapse;
+  margin: 2em auto;
+}
+th, td {
+  border: 2px solid #f7bfd2;
+  padding: 12px 18px;
+  min-width: 80px;
+  text-align: center;
+  background: #fff0f5;
+}
+td:focus { outline: 2px solid #e75480; background: #ffd6e8; }
+.task-name { background:#ffd6e8; font-weight:600; }
+.count-row td { background:#ffd6e8; font-weight:600; }
+</style>
+</head>
+<body>
+
+<h1>💗 Priority Matrix</h1>
+<p>Enter your tasks (one per line):</p>
+<textarea id="tasks" placeholder="Task A&#10;Task B&#10;Task C&#10;Task D"></textarea><br>
+<button id="createTable">Create Tournament Table</button>
+
+<table id="matrix"></table>
+<button id="calculate" style="display:none;">Calculate Priority Counts</button>
+<div id="priorityList"></div>
+
+<script>
+const tasksBox = document.getElementById("tasks");
+const createBtn = document.getElementById("createTable");
+const matrix = document.getElementById("matrix");
+const calcBtn = document.getElementById("calculate");
+const priorityDiv = document.getElementById("priorityList");
+
+let tasks = [];
+
+createBtn.onclick = () => {
+  tasks = tasksBox.value.trim().split(/\n+/).map(t=>t.trim()).filter(Boolean);
+  if(tasks.length < 2) return alert("Enter at least 2 tasks!");
+  
+  matrix.innerHTML = "";
+  priorityDiv.innerHTML = "";
+
+  const totalRows = tasks.length;
+  let html = "";
+
+  // Build tournament rows
+  for(let i=0; i<totalRows; i++){
+    html += "<tr>";
+    for(let j=0; j<=i; j++){
+      html += `<td contenteditable="true"></td>`;
+    }
+    html += `<td class="task-name">${tasks[i]}</td>`;
+    html += "</tr>";
+  }
+
+  // Bottom row for counts
+  html += "<tr class='count-row'>";
+  for(let i=0; i<totalRows; i++){
+    html += `<td contenteditable="true"></td>`;
+  }
+  html += "<td>Counts</td>";
+  html += "</tr>";
+
+  matrix.innerHTML = html;
+  calcBtn.style.display = "inline-block";
+};
+
+calcBtn.onclick = () => {
+  const rows = matrix.getElementsByTagName("tr");
+  const bottomCells = rows[rows.length - 1].getElementsByTagName("td");
+
+  // Read user input counts from bottom row
+  const counts = {};
+  tasks.forEach((t, i) => {
+    const val = parseInt(bottomCells[i].innerText.trim());
+    counts[t] = isNaN(val) ? 0 : val;
+  });
+
+  // Group tasks with equal counts
+  const grouped = {};
+  Object.entries(counts).forEach(([task, count]) => {
+    if(!grouped[count]) grouped[count] = [];
+    grouped[count].push(task);
+  });
+
+  // Sort counts descending
+  const sortedCounts = Object.keys(grouped).map(Number).sort((a,b)=>b-a);
+
+  // Build priority list
+  let priorityText = "";
+  let rank = 1;
+  sortedCounts.forEach(count => {
+    priorityText += `${rank}. ${grouped[count].join(", ")} (${count})<br>`;
+    rank++;
+  });
+
+  priorityDiv.innerHTML = "<h2>Final Priority List</h2>" + priorityText;
+};
+</script>
+
+</body>
+</html>
